@@ -1,0 +1,37 @@
+Test Case ID	Function	Test Steps	Input Data	Expected Result
+TC01	UC-01: Login (Valid)	"1. Go to /login
+2. Enter valid username & password
+3. Click 'Log In'"	"Username: admin
+Password: Admin123"	User logs in successfully and redirects to /admin/dashboard
+TC02	UC-01: Login (Invalid Password)	"1. Go to /login
+2. Enter valid username & wrong password
+3. Click 'Log In'"	"Username: staff01
+Password: WrongPass1"	Error message 'Invalid username or password' appears; failed attempts incremented
+TC03	UC-01 / BR-15: Login (5 Failed Attempts Lock)	"1. Go to /login
+2. Submit wrong password 5 consecutive times
+3. Attempt login with correct password"	"Username: staff01
+Password: WrongPass1 (x5), then Staff123"	Account is temporarily locked for 15 minutes; login is rejected with lock message
+TC04	UC-01: Login (Locked Account)	"1. Lock user account lecturer01
+2. Go to /login and submit credentials"	"Username: lecturer01
+Password: TempPass1"	Error message 'Account locked. Contact administrator.' appears
+TC05	UC-02: Reset Password (Valid)	"1. Click 'Forgot password?'
+2. Enter registered username/email
+3. Open generated link and enter new valid password"	"Identifier: stu01@school.edu
+New Password: NewPass123"	Password hash updated, prior sessions invalidated, redirected to Login screen
+TC06	UC-02: Reset Password (Weak Password / Expired Token)	"1. Open reset link
+2. Submit weak password ('123') or use expired token (>15 mins)"	"Token: expired or valid
+New Password: 123"	System displays complexity or expired token error; password is not updated
+TC07	UC-03: Logout	"1. Sign in as admin
+2. Click 'Logout' on header
+3. Navigate directly to /admin/dashboard"	Active admin session	Session invalidated, redirected to /login, protected route inaccessible
+TC08	UC-04: Manage Accounts (Create & Duplicate Check)	"1. Open /admin/accounts
+2. Fill Add User form and submit
+3. Submit again with same username"	"Username: lecturer01
+Email: lec01@school.edu
+Role: Lecturer"	First creation succeeds; duplicate submission displays 'Username already taken.'
+TC09	UC-04: Manage Accounts (Prevent Self-Lock)	"1. Sign in as admin
+2. Attempt to toggle status on own account ID"	"Actor: admin
+Target: admin"	System blocks action and displays 'Administrator cannot lock their own active account.'
+TC10	RBAC Authorization Check	"1. Sign in as Student (student99)
+2. Request /admin/accounts"	"Role: Student
+URL: /admin/accounts"	Access denied with HTTP 403 Forbidden
