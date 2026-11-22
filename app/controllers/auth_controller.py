@@ -30,11 +30,15 @@ def index():
         if user and user.status == "Active":
             return redirect(resolve_dashboard_url(user))
     return redirect(url_for("auth.login"))
-
-
+    
 @auth_bp.route("/login", methods=["GET", "POST"])
 @csrf_protect
 def login():
+    if request.method == "GET" and session.get("user_id"):
+        db = current_app.extensions["db"]
+        current_user = User.find_by_id(db, session["user_id"])
+        if current_user and current_user.status == "Active":
+            return redirect(resolve_dashboard_url(current_user))
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
@@ -61,7 +65,6 @@ def login():
         session["session_version"] = user.session_version
         return redirect(resolve_dashboard_url(user))
     return render_template("auth/login.html", username="")
-
 
 @auth_bp.route("/logout", methods=["POST", "GET"])
 def logout():
