@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Manage Accounts & Rights - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 20px;">Manage Accounts & Rights</h1>
+
+<div class="panel">
+    <div class="panel-title">+ Add User</div>
+    <form method="POST" action="{{ url_for('admin.create_account') }}" class="grid-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label>Username</label>
+            <input name="username" type="text" class="form-control" required>
+        </div>
+        <div>
+            <label>Email</label>
+            <input name="email" type="email" class="form-control" required>
+        </div>
+        <div>
+            <label>Temporary Password</label>
+            <input name="password" type="password" class="form-control" required>
+        </div>
+        <div>
+            <label>Role</label>
+            <select name="role" class="form-control" required>
+                {% for r in roles %}
+                    <option value="{{ r }}">{{ r }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel">
+    <form method="GET" action="{{ url_for('admin.accounts') }}" class="filter-bar">
+        <input name="search" type="text" class="form-control" style="max-width: 280px;" placeholder="Search username or email..." value="{{ search }}">
+        <select name="role" class="form-control" style="max-width: 180px;">
+            <option value="">All Roles</option>
+            {% for r in roles %}
+                <option value="{{ r }}" {% if role_filter == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('admin.accounts') }}" class="btn btn-secondary">Reset</a>
+    </form>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in pagination['items'] %}
+                <tr>
+                    <td>{{ u.user_id }}</td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.update_account_role', user_id=u.user_id) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="role" class="form-control" style="width: 120px; padding: 6px;">
+                                {% for r in roles %}
+                                    <option value="{{ r }}" {% if u.role == r %}selected{% endif %}>{{ r }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+                        </form>
+                    </td>
+                    <td>
+                        <span class="badge {% if u.status == 'Active' %}badge-active{% else %}badge-locked{% endif %}">
+                            {{ u.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if u.user_id == session.get('user_id') %}
+                            <span class="muted">Current Admin</span>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('admin.toggle_account_status', user_id=u.user_id) }}" class="inline-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm {% if u.status == 'Active' %}btn-danger{% else %}btn-success{% endif %}">
+                                    {% if u.status == 'Active' %}Lock{% else %}Unlock{% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6" class="text-center muted">No accounts found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        {% if pagination['page'] > 1 %}
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.accounts', page=pagination['page']-1, search=search, role=role_filter) }}">Prev</a>
+        {% endif %}
+        <span class="btn btn-secondary btn-sm">Page {{ pagination['page'] }} / {{ pagination['total_pages'] }}</span>
+        {% if pagination['page'] < pagination['total_pages'] %}
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.accounts', page=pagination['page']+1, search=search, role=role_filter) }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
