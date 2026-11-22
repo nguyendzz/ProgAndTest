@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Overview - Student Manager System{% endblock %}
+{% block content %}
+<h1>Dashboard Overview</h1>
+
+{% if stats %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Students</div>
+            <div class="stat-value">{{ stats.total_students }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Classes</div>
+            <div class="stat-value">{{ stats.total_classes }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Active Courses</div>
+            <div class="stat-value">{{ stats.active_courses }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Pending Enrollments</div>
+            <div class="stat-value accent">{{ stats.pending_enrollments }}</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">Quick Actions</div>
+        <a href="{{ url_for('admin.accounts') }}" class="btn btn-primary">+ Manage User Accounts</a>
+        <a href="{{ url_for('auth.change_password') }}" class="btn btn-secondary">Change Password</a>
+    </div>
+{% else %}
+    <div class="panel" style="margin-top: 20px;">
+        <div class="panel-title">Welcome, {{ session.get('username') }}</div>
+        <p class="muted">Authenticated role: {{ session.get('role') }}.</p>
+    </div>
+{% endif %}
+{% endblock %}
