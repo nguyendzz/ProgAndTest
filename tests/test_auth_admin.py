@@ -178,8 +178,9 @@ def test_uc04_admin_manage_accounts_and_self_lock_prevention(client, db):
         follow_redirects=True,
     )
     assert b"Account status updated to Locked." in lock_other.data
-
+    client.get("/logout")
     locked_login = login_as(client, "lecturer01", "TempPass1")
+    
     assert locked_login.status_code == 403
     assert b"Account locked. Contact administrator." in locked_login.data
 
