@@ -38,7 +38,7 @@ def seed_staff_and_lecturer(db):
         )
 
 
-def test_uc05_manage_classes_and_faculties(client, db):
+def test_manage_classes_and_faculties(client, db):
     seed_staff_and_lecturer(db)
     login_as(client, "staff01", "Staff123")
     page = client.get("/staff/classes-faculties")
@@ -79,7 +79,7 @@ def test_uc05_manage_classes_and_faculties(client, db):
     assert b"Please select a faculty." in no_fac.data
 
 
-def test_uc06_br12_subjects_and_circular_prerequisite(db):
+def test_subjects_and_circular_prerequisite(db):
     sub_a, _ = Subject.create(db, "IT001", "Intro Programming", 3, None)
     assert sub_a is not None
     sub_b, _ = Subject.create(db, "IT002", "Data Structures", 4, "IT001")
@@ -98,7 +98,7 @@ def test_uc06_br12_subjects_and_circular_prerequisite(db):
     assert "circular" in cycle_msg.lower()
 
 
-def test_uc07_uc08_br16_student_profiles_and_deactivate(client, db):
+def test_student_profiles_and_deactivate(client, db):
     seed_staff_and_lecturer(db)
     AdministrativeClass.create(db, "IT_01", "IT", "IT Cohort 01", "2026-2030")
     Subject.create(db, "SE104", "Software Engineering", 4, None)
@@ -147,7 +147,7 @@ def test_uc07_uc08_br16_student_profiles_and_deactivate(client, db):
     assert StudentProfileManager.find_by_id(db, "S2026002") is None
 
 
-def test_uc09_br13_br19_open_course_sections_conflicts(db):
+def test_open_course_sections_conflicts(db):
     seed_staff_and_lecturer(db)
     Subject.create(db, "SE104", "Software Engineering", 4, None)
     Subject.create(db, "OLD01", "Legacy Course", 3, None)
@@ -189,7 +189,7 @@ def test_uc09_br13_br19_open_course_sections_conflicts(db):
     assert "Room is occupied" in msg_room
 
 
-def test_uc10_br14_manage_registration_periods(db):
+def test_manage_registration_periods(db):
     bad_dates, msg_bad = RegistrationPeriod.create(
         db,
         "HK1 2026-2027",
