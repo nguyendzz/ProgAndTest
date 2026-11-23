@@ -142,13 +142,12 @@ CREATE TABLE IF NOT EXISTS SEMESTER_REGISTRATIONS (
     UNIQUE (StudentID, Semester),
     FOREIGN KEY (StudentID) REFERENCES STUDENTS(StudentID) ON UPDATE CASCADE ON DELETE RESTRICT
 );
-
 CREATE TRIGGER IF NOT EXISTS trg_grades_compute_insert
 AFTER INSERT ON GRADES
 WHEN NEW.AttendanceScore IS NOT NULL AND NEW.MidtermScore IS NOT NULL AND NEW.FinalExamScore IS NOT NULL AND NEW.GradeStatus != 'W'
 BEGIN
     UPDATE GRADES
-    SET FinalScore = ROUND(NEW.AttendanceScore * 0.1 + NEW.MidtermScore * 0.3 + NEW.FinalExamScore * 0.6, 1)
+    SET FinalScore = ROUND((NEW.AttendanceScore * 10 + NEW.MidtermScore * 30 + NEW.FinalExamScore * 60 + 0.000001) / 100.0, 1)
     WHERE GradeID = NEW.GradeID;
 END;
 
@@ -157,6 +156,6 @@ AFTER UPDATE OF AttendanceScore, MidtermScore, FinalExamScore ON GRADES
 WHEN NEW.AttendanceScore IS NOT NULL AND NEW.MidtermScore IS NOT NULL AND NEW.FinalExamScore IS NOT NULL AND NEW.GradeStatus != 'W'
 BEGIN
     UPDATE GRADES
-    SET FinalScore = ROUND(NEW.AttendanceScore * 0.1 + NEW.MidtermScore * 0.3 + NEW.FinalExamScore * 0.6, 1)
+    SET FinalScore = ROUND((NEW.AttendanceScore * 10 + NEW.MidtermScore * 30 + NEW.FinalExamScore * 60 + 0.000001) / 100.0, 1)
     WHERE GradeID = NEW.GradeID;
 END;
