@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Course Registration Portal - Student Manager System{% endblock %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px;">
+    <h1>Course Registration — {{ semester or 'No Period Configured' }}</h1>
+    {% if active_period %}
+        <span class="badge {% if period_open %}badge-active{% else %}badge-locked{% endif %}" style="font-size: 13px; padding: 8px 14px;">
+            Period: {{ active_period.Status }} | Closes: {{ active_period.RegCloseDate }} | Allowed Credits: {{ credit_summary.min_credits }} - {{ credit_summary.max_credits }}
+        </span>
+    {% endif %}
+</div>
+
+{% if not period_open %}
+    <div class="alert alert-warning">
+        Registration period is currently closed (read-only view).
+    </div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start;">
+    <div class="panel">
+        <div class="panel-title">1. Course Catalog Search</div>
+        <form method="GET" action="{{ url_for('student.dashboard') }}" class="filter-bar">
+            {% if periods %}
+                <select name="semester" class="form-control" style="max-width: 170px;">
+                    {% for p in periods %}
+                        <option value="{{ p.Semester }}" {% if p.Semester == semester %}selected{% endif %}>{{ p.Semester }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+            <input name="search" type="text" class="form-control" style="max-width: 210px;" placeholder="Subject code or name..." value="{{ search }}">
+            <select name="faculty_id" class="form-control" style="max-width: 140px;">
+                <option value="">All Faculties</option>
+                {% for f in faculties %}
+                    <option value="{{ f.FacultyID }}" {% if faculty_id == f.FacultyID %}selected{% endif %}>{{ f.FacultyID }}</option>
+                {% endfor %}
+            </select>
+            <select name="day" class="form-control" style="max-width: 110px;">
+                <option value="">Day: All</option>
+                {% for d in days %}
+                    <option value="{{ d }}" {% if day == d %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+            </select>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+                <input type="checkbox" name="available_only" value="1" {% if available_only %}checked{% endif %}> Available Only
+            </label>
+            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        </form>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Subject (Credits)</th>
+                    <th>Schedule & Room</th>
+                    <th>Seats</th>
+                    <th>Prerequisite</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in catalog %}
+                    <tr>
+                        <td><strong>{{ item.SectionID }}</strong></td>
+                        <td>
+                            {{ item.SubjectName }} ({{ item.Credits }} cr)
+                            <div class="muted">{{ item.LecturerName }}</div>
+                        </td>
+                        <td>{{ item.DayOfWeek }} {{ item.StartTime }}-{{ item.EndTime }} ({{ item.Room }})</td>
+                        <td>{{ item.RemainingSeats }} / {{ item.Capacity }}</td>
+                        <td>
+                            <span class="badge {% if item.PrerequisiteMet %}badge-active{% else %}badge-locked{% endif %}">
+                                {% if item.PrerequisiteMet %}Met{% else %}Not Met{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if item.IsEnrolled %}
+                                <span class="badge badge-active">Enrolled</span>
+                            {% elif item.InCart %}
+                                <span class="badge badge-active">In Cart</span>
+                            {% elif item.WaitlistPosition %}
+                                <span class="badge badge-locked">Waitlist #{{ item.WaitlistPosition }}</span>
+                            {% elif not period_open %}
+                                <span class="muted">Closed</span>
+                            {% elif not item.PrerequisiteMet %}
+                                <span class="btn btn-secondary btn-sm">Locked</span>
+                            {% elif item.HasConflict %}
+                                <span class="badge badge-locked">Conflict ({{ item.ConflictSection }})</span>
+                            {% elif item.RemainingSeats == 0 %}
+                                <form method="POST" action="{{ url_for('student.join_waitlist') }}" class="inline-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="semester" value="{{ semester }}">
+                                    <input type="hidden" name="section_id" value="{{ item.SectionID }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Join Waitlist</button>
+                                </form>
+                            {% else %}
+                                <form method="POST" action="{{ url_for('student.add_to_cart') }}" class="inline-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="semester" value="{{ semester }}">
+                                    <input type="hidden" name="section_id" value="{{ item.SectionID }}">
+                                    <button type="submit" class="btn btn-primary btn-sm">+ Add to Cart</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6" class="text-center muted">No open course sections found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <div class="panel">
+            <div class="panel-title">2. Registration Staging Cart ({{ cart_items|length }})</div>
+            {% for c in cart_items %}
+                <div style="border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 10px; padding: 12px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; gap: 8px;">
+                        <div>
+                            <strong>{{ c.SectionID }} - {{ c.SubjectName }} ({{ c.Credits }} cr)</strong>
+                            <div class="muted">{{ c.DayOfWeek }} {{ c.StartTime }}-{{ c.EndTime }} | Room {{ c.Room }}</div>
+                        </div>
+                        <form method="POST" action="{{ url_for('student.remove_from_cart') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="semester" value="{{ semester }}">
+                            <input type="hidden" name="section_id" value="{{ c.SectionID }}">
+                            <button type="submit" class="btn btn-secondary btn-sm">Remove</button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <p class="muted" style="margin-bottom: 14px;">Your staging cart is empty.</p>
+            {% endfor %}
+
+            <div class="alert {% if credit_summary.projected_credits > credit_summary.max_credits %}alert-danger{% else %}alert-success{% endif %}">
+                <div>Enrolled Credits: <strong>{{ credit_summary.enrolled_credits }}</strong> | Cart Credits: <strong>{{ credit_summary.cart_credits }}</strong></div>
+                <div>Total Projected: <strong>{{ credit_summary.projected_credits }} / {{ credit_summary.max_credits }}</strong></div>
+                {% if credit_summary.previous_gpa >= 8.0 %}
+                    <div class="muted">Honors credit limit active (Previous GPA: {{ credit_summary.previous_gpa }}).</div>
+                {% endif %}
+            </div>
+
+            {% if cart_items and period_open %}
+                <form method="POST" action="{{ url_for('student.checkout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="semester" value="{{ semester }}">
+                    <button type="submit" class="btn btn-success btn-block">Confirm Registration (Atomic Checkout)</button>
+                </form>
+            {% endif %}
+        </div>
+
+        {% if sem_reg %}
+            <div class="panel">
+                <div class="panel-title">3. Atomic Checkout Receipt</div>
+                <div class="alert alert-success" style="margin-bottom: 0;">
+                    Receipt ID: <strong>{{ sem_reg.confirmation_number }}</strong><br>
+                    Confirmed Credits: <strong>{{ sem_reg.total_credits_enrolled }}</strong>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="panel">
+            <div class="panel-title">4. Real-Time Waitlist Tracking</div>
+            {% for w in waitlists %}
+                <div class="alert alert-warning" style="margin-bottom: 8px;">
+                    <strong>{{ w.SectionID }} - {{ w.SubjectName }}</strong><br>
+                    Queue Position: <strong>#{{ w.QueuePosition }}</strong> (FIFO Auto-promote enabled)
+                </div>
+            {% else %}
+                <p class="muted">No active waitlist entries.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Registration History - Student Manager System{% endblock %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+    <h1>Registration History — {{ student.student_id }} | {{ student.full_name }}</h1>
+    <form method="GET" action="{{ url_for('student.history') }}" class="inline-form">
+        <select name="semester" class="form-control">
+            {% for p in periods %}
+                <option value="{{ p.Semester }}" {% if p.Semester == semester %}selected{% endif %}>{{ p.Semester }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">View</button>
+    </form>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Confirmed Credits</div>
+        <div class="stat-value">{{ credit_summary.enrolled_credits }} / {{ credit_summary.max_credits }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Minimum Policy</div>
+        <div class="stat-value">{{ credit_summary.min_credits }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Receipt Number</div>
+        <div class="stat-value" style="font-size: 18px;">{{ sem_reg.confirmation_number if sem_reg else '—' }}</div>
+    </div>
+</div>
+
+{% if active_period %}
+    <div class="alert alert-info">
+        Drop Deadline (no transcript record): <strong>{{ active_period.DropDeadline }}</strong> |
+        Withdraw Deadline (grade 'W'): <strong>{{ active_period.WithdrawDeadline }}</strong>
+    </div>
+{% endif %}
+
+<div class="panel">
+    <div class="panel-title">Registered Course Sections</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Section</th>
+                <th>Subject</th>
+                <th>Credits</th>
+                <th>Schedule & Room</th>
+                <th>Confirmation</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in enrollments %}
+                <tr>
+                    <td>{{ e.SectionID }}</td>
+                    <td>{{ e.SubjectID }} - {{ e.SubjectName }}</td>
+                    <td>{{ e.Credits }}</td>
+                    <td>{{ e.DayOfWeek }} {{ e.StartTime }}-{{ e.EndTime }} ({{ e.Room }})</td>
+                    <td>{{ e.ConfirmationNumber }}</td>
+                    <td>
+                        <span class="badge {% if e.Status == 'Enrolled' %}badge-active{% else %}badge-locked{% endif %}">
+                            {{ e.Status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if e.Status == 'Enrolled' and action_mode in ('drop', 'withdraw') %}
+                            <form method="POST" action="{{ url_for('student.drop_course') }}" class="inline-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="semester" value="{{ semester }}">
+                                <input type="hidden" name="section_id" value="{{ e.SectionID }}">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    {% if action_mode == 'drop' %}Drop{% else %}Withdraw (W){% endif %}
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="7" class="text-center muted">No registration records found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="panel">
+    <div class="panel-title">Waitlist Queue Records</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Section</th>
+                <th>Subject</th>
+                <th>Queue Position</th>
+                <th>Joined At</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for w in waitlists %}
+                <tr>
+                    <td>{{ w.SectionID }}</td>
+                    <td>{{ w.SubjectID }} - {{ w.SubjectName }}</td>
+                    <td>#{{ w.QueuePosition }}</td>
+                    <td>{{ w.JoinedAt }}</td>
+                    <td>
+                        <span class="badge {% if w.Status == 'Enrolled' %}badge-active{% else %}badge-locked{% endif %}">
+                            {{ w.Status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if w.Status == 'Waiting' %}
+                            <form method="POST" action="{{ url_for('student.cancel_waitlist', waitlist_id=w.WaitlistID) }}" class="inline-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="semester" value="{{ semester }}">
+                                <button type="submit" class="btn btn-secondary btn-sm">Cancel</button>
+                            </form>
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center muted">No waitlist records found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
