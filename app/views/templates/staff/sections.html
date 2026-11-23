@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Open Course Sections - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 20px;">Open Course Sections (UC-09)</h1>
+
+<div class="panel">
+    <div class="panel-title">+ Open Course Section</div>
+    <form method="POST" action="{{ url_for('staff.create_section') }}" class="grid-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label>Section ID</label>
+            <input name="section_id" type="text" maxlength="10" class="form-control" placeholder="SE104.01" required>
+        </div>
+        <div>
+            <label>Subject</label>
+            <select name="subject_id" class="form-control" required>
+                <option value="">-- Select Subject --</option>
+                {% for s in subjects %}
+                    <option value="{{ s.subject_id }}">{{ s.subject_id }} - {{ s.subject_name }} ({{ s.status }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Lecturer</label>
+            <select name="lecturer_id" class="form-control" required>
+                <option value="">-- Select Lecturer --</option>
+                {% for l in lecturers %}
+                    <option value="{{ l.LecturerID }}">{{ l.LecturerID }} - {{ l.FullName }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Semester</label>
+            <input name="semester" type="text" class="form-control" placeholder="HK1 2026-2027" required>
+        </div>
+        <div>
+            <label>Capacity (10-200)</label>
+            <input name="capacity" type="number" min="10" max="200" value="60" class="form-control" required>
+        </div>
+        <div>
+            <label>Day of Week</label>
+            <select name="day_of_week" class="form-control" required>
+                {% for d in days %}
+                    <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Start Time</label>
+            <input name="start_time" type="time" class="form-control" value="07:30" required>
+        </div>
+        <div>
+            <label>End Time</label>
+            <input name="end_time" type="time" class="form-control" value="10:30" required>
+        </div>
+        <div>
+            <label>Room</label>
+            <input name="room" type="text" class="form-control" placeholder="B201" required>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">Open Section</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-title">Course Sections List</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Section ID</th>
+                <th>Subject</th>
+                <th>Lecturer</th>
+                <th>Semester</th>
+                <th>Schedule & Room</th>
+                <th>Capacity</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sec in sections %}
+                <tr>
+                    <td>{{ sec.section_id }}</td>
+                    <td>{{ sec.subject_id }} - {{ sec.subject_name }}</td>
+                    <td>{{ sec.lecturer_name }}</td>
+                    <td>{{ sec.semester }}</td>
+                    <td>{{ sec.schedule }} | {{ sec.room }}</td>
+                    <td>{{ sec.capacity }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('staff.update_section_status', section_id=sec.section_id) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="status" class="form-control" style="width: 115px; padding: 6px;">
+                                {% for st in statuses %}
+                                    <option value="{{ st }}" {% if sec.status == st %}selected{% endif %}>{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="7" class="text-center muted">No course sections opened.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

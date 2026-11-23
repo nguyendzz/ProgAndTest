@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Student Profile {{ student.StudentID }} - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 20px;">Student Profile — {{ student.StudentID }}</h1>
+
+<div class="panel" style="max-width: 680px;">
+    <p class="muted" style="margin-bottom: 16px;">
+        Linked Username: <strong>{{ student.Username }}</strong> |
+        Account Status: <strong>{{ student.AccountStatus }}</strong> |
+        Academic Enrollments: <strong>{{ student.EnrollmentCount }}</strong>
+    </p>
+    <form method="POST" action="{{ url_for('staff.update_student', student_id=student.StudentID) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input name="full_name" type="text" class="form-control" value="{{ student.FullName }}" required>
+        </div>
+        <div class="form-group">
+            <label>Date of Birth</label>
+            <input name="dob" type="date" class="form-control" value="{{ student.DOB }}" required>
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input name="email" type="email" class="form-control" value="{{ student.Email }}" required>
+        </div>
+        <div class="form-group">
+            <label>Phone</label>
+            <input name="phone" type="text" class="form-control" value="{{ student.Phone or '' }}">
+        </div>
+        <div class="form-group">
+            <label>Administrative Class</label>
+            <select name="class_id" class="form-control" required>
+                {% for c in classes %}
+                    <option value="{{ c.class_id }}" {% if c.class_id == student.ClassID %}selected{% endif %}>{{ c.class_id }} - {{ c.class_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Profile Status</label>
+            <select name="status" class="form-control" required>
+                {% for st in statuses %}
+                    <option value="{{ st }}" {% if st == student.Status %}selected{% endif %}>{{ st }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{{ url_for('staff.students') }}" class="btn btn-secondary">Back to List</a>
+    </form>
+</div>
+{% endblock %}

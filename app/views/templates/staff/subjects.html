@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Manage Subjects - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 20px;">Manage Curriculum Subjects (UC-06)</h1>
+
+<div class="panel">
+    <div class="panel-title">+ Add Subject</div>
+    <form method="POST" action="{{ url_for('staff.create_subject') }}" class="grid-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label>Subject ID</label>
+            <input name="subject_id" type="text" maxlength="10" class="form-control" placeholder="e.g. SE104" required>
+        </div>
+        <div>
+            <label>Subject Name</label>
+            <input name="subject_name" type="text" class="form-control" required>
+        </div>
+        <div>
+            <label>Credits (1-10)</label>
+            <input name="credits" type="number" min="1" max="10" value="3" class="form-control" required>
+        </div>
+        <div>
+            <label>Prerequisite (Optional)</label>
+            <select name="prerequisite_id" class="form-control">
+                <option value="">None</option>
+                {% for s in subjects %}
+                    <option value="{{ s.subject_id }}">{{ s.subject_id }} - {{ s.subject_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">Add Subject</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-title">Subject Catalog</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Subject ID</th>
+                <th>Subject Name</th>
+                <th>Credits</th>
+                <th>Prerequisite</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in subjects %}
+                <tr>
+                    <td>{{ s.subject_id }}</td>
+                    <td>{{ s.subject_name }}</td>
+                    <td>{{ s.credits }}</td>
+                    <td>{{ s.prerequisite_id or '—' }}</td>
+                    <td>
+                        <span class="badge {% if s.status == 'Active' %}badge-active{% else %}badge-locked{% endif %}">
+                            {{ s.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('staff.update_subject_status', subject_id=s.subject_id) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="status" value="{% if s.status == 'Active' %}Archived{% else %}Active{% endif %}">
+                            <button type="submit" class="btn btn-sm {% if s.status == 'Active' %}btn-danger{% else %}btn-success{% endif %}">
+                                {% if s.status == 'Active' %}Archive{% else %}Restore{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center muted">No subjects available.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

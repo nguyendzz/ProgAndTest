@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Manage Registration Periods - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 20px;">Manage Registration Periods (UC-10)</h1>
+
+<div class="panel">
+    <div class="panel-title">+ New Registration Period</div>
+    <form method="POST" action="{{ url_for('staff.create_period') }}" class="grid-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label>Semester</label>
+            <input name="semester" type="text" class="form-control" placeholder="HK1 2026-2027" required>
+        </div>
+        <div>
+            <label>Reg Open Date</label>
+            <input name="reg_open_date" type="datetime-local" class="form-control" required>
+        </div>
+        <div>
+            <label>Reg Close Date</label>
+            <input name="reg_close_date" type="datetime-local" class="form-control" required>
+        </div>
+        <div>
+            <label>Late Reg Deadline</label>
+            <input name="late_reg_deadline" type="datetime-local" class="form-control">
+        </div>
+        <div>
+            <label>Drop Deadline</label>
+            <input name="drop_deadline" type="date" class="form-control" required>
+        </div>
+        <div>
+            <label>Withdraw Deadline</label>
+            <input name="withdraw_deadline" type="date" class="form-control" required>
+        </div>
+        <div>
+            <label>Min Credits</label>
+            <input name="min_credits" type="number" value="14" class="form-control" required>
+        </div>
+        <div>
+            <label>Max Credits</label>
+            <input name="max_credits" type="number" value="25" class="form-control" required>
+        </div>
+        <div>
+            <label>Status</label>
+            <select name="status" class="form-control">
+                {% for st in statuses %}
+                    <option value="{{ st }}">{{ st }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">Create Period</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-title">Registration Period Timeline</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Semester</th>
+                <th>Open / Close</th>
+                <th>Late Reg</th>
+                <th>Drop / Withdraw</th>
+                <th>Credits</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in periods %}
+                <tr>
+                    <td>{{ p.semester }}</td>
+                    <td>{{ p.reg_open_date }}<br>{{ p.reg_close_date }}</td>
+                    <td>{{ p.late_reg_deadline or '—' }}</td>
+                    <td>Drop: {{ p.drop_deadline }}<br>Withdraw: {{ p.withdraw_deadline }}</td>
+                    <td>{{ p.min_credits }} - {{ p.max_credits }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('staff.update_period_status', period_id=p.period_id) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="status" class="form-control" style="width: 115px; padding: 6px;">
+                                {% for st in statuses %}
+                                    <option value="{{ st }}" {% if p.status == st %}selected{% endif %}>{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center muted">No registration periods configured.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Academic Staff Overview - Student Manager System{% endblock %}
+{% block content %}
+<h1>Academic Staff Dashboard</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Faculties</div>
+        <div class="stat-value">{{ stats.total_faculties }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Classes</div>
+        <div class="stat-value">{{ stats.total_classes }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Active Subjects</div>
+        <div class="stat-value">{{ stats.total_subjects }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Students</div>
+        <div class="stat-value">{{ stats.total_students }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Open Sections</div>
+        <div class="stat-value">{{ stats.open_sections }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Active Periods</div>
+        <div class="stat-value accent">{{ stats.active_periods }}</div>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-title">Quick Actions</div>
+    <a href="{{ url_for('staff.classes_faculties') }}" class="btn btn-primary">Manage Classes & Faculties</a>
+    <a href="{{ url_for('staff.subjects') }}" class="btn btn-primary">Manage Subjects</a>
+    <a href="{{ url_for('staff.students') }}" class="btn btn-primary">Manage Students</a>
+    <a href="{{ url_for('staff.sections') }}" class="btn btn-secondary">Open Course Sections</a>
+    <a href="{{ url_for('staff.periods') }}" class="btn btn-secondary">Registration Periods</a>
+</div>
+{% endblock %}
