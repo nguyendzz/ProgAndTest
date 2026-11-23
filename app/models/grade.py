@@ -72,12 +72,12 @@ class Grade:
         ):
             self._finalScore = None
             return None
-        computed = round(
-            0.10 * self._attendanceScore
-            + 0.30 * self._midtermScore
-            + 0.60 * self._finalExamScore,
-            1,
+        raw = (
+            Decimal("0.10") * Decimal(str(self._attendanceScore))
+            + Decimal("0.30") * Decimal(str(self._midtermScore))
+            + Decimal("0.60") * Decimal(str(self._finalExamScore))
         )
+        computed = float(raw.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
         self._finalScore = computed
         return computed
 
