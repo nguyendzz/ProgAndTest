@@ -1,1 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Reports & Statistics - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 20px;">Reports & Statistics (UC-24 / UC-25)</h1>
 
+<div class="panel">
+    <form method="GET" action="{{ url_for('reports.analytics') }}" class="grid-4">
+        <div>
+            <label>Report Template</label>
+            <select name="report_type" class="form-control">
+                {% for key, label in templates.items() %}
+                    <option value="{{ key }}" {% if report_data.report_type == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Faculty</label>
+            <select name="faculty_id" class="form-control">
+                <option value="">All Faculties</option>
+                {% for f in faculties %}
+                    <option value="{{ f.FacultyID }}" {% if faculty_id == f.FacultyID %}selected{% endif %}>{{ f.FacultyID }} - {{ f.FacultyName }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Semester</label>
+            <select name="semester" class="form-control">
+                <option value="">All Semesters</option>
+                {% for sem in semesters %}
+                    <option value="{{ sem }}" {% if semester == sem %}selected{% endif %}>{{ sem }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Subject</label>
+            <select name="subject_id" class="form-control">
+                <option value="">All Subjects</option>
+                {% for sub in subjects %}
+                    <option value="{{ sub.SubjectID }}" {% if subject_id == sub.SubjectID %}selected{% endif %}>{{ sub.SubjectID }} - {{ sub.SubjectName }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">Generate Report</button>
+        </div>
+    </form>
+</div>
+
+<div class="stats-grid">
+    {% for label, value in report_data.metrics %}
+        <div class="stat-card">
+            <div class="stat-label">{{ label }}</div>
+            <div class="stat-value">{{ value }}</div>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+            <div class="panel-title" style="margin-bottom: 4px;">{{ report_data.title }}</div>
+            <div class="muted">Generated At: {{ report_data.generated_at }}</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a class="btn btn-success btn-sm"
+               href="{{ url_for('reports.export_excel', report_type=report_data.report_type, faculty_id=faculty_id, semester=semester, subject_id=subject_id) }}">
+                Export to Excel
+            </a>
+            <a class="btn btn-danger btn-sm"
+               href="{{ url_for('reports.export_pdf', report_type=report_data.report_type, faculty_id=faculty_id, semester=semester, subject_id=subject_id) }}">
+                Export to PDF
+            </a>
+        </div>
+    </div>
+
+    {% if report_data.rows %}
+        <table class="table">
+            <thead>
+                <tr>
+                    {% for h in report_data.headers %}
+                        <th>{{ h }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report_data.rows %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info">No data found.</div>
+    {% endif %}
+</div>
+{% endblock %}
