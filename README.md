@@ -1,6 +1,6 @@
 # Student Manager System — Group 02
 
-Repository: ```bash `https://github.com/nguyendzz/StudentManagerSystem_Group02.git`
+Repository: ```bash `https://github.com/nguyendzz/StudentManagerSystem_Group02.git` ```
 
 ## Architecture
 - Pattern: **MVC (Model – View – Controller)** (Chapter 3)
