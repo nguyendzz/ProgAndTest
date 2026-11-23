@@ -23,6 +23,14 @@
             {% if session.get('role') == 'Admin' %}
                 <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">Dashboard</a>
                 <a href="{{ url_for('admin.accounts') }}" class="{% if request.endpoint == 'admin.accounts' %}active{% endif %}">Accounts & Rights</a>
+            {% endif %}
+            {% if session.get('role') in ('Staff', 'Admin') %}
+                <a href="{{ url_for('staff.dashboard') }}" class="{% if request.endpoint == 'staff.dashboard' %}active{% endif %}">Staff Overview</a>
+                <a href="{{ url_for('staff.classes_faculties') }}" class="{% if request.endpoint == 'staff.classes_faculties' %}active{% endif %}">Classes & Faculties</a>
+                <a href="{{ url_for('staff.subjects') }}" class="{% if request.endpoint == 'staff.subjects' %}active{% endif %}">Subjects</a>
+                <a href="{{ url_for('staff.students') }}" class="{% if request.endpoint in ('staff.students', 'staff.view_student') %}active{% endif %}">Student Profiles</a>
+                <a href="{{ url_for('staff.sections') }}" class="{% if request.endpoint == 'staff.sections' %}active{% endif %}">Course Sections</a>
+                <a href="{{ url_for('staff.periods') }}" class="{% if request.endpoint == 'staff.periods' %}active{% endif %}">Registration Periods</a>
             {% else %}
                 <a href="{{ url_for('auth.portal_home') }}" class="active">Dashboard</a>
             {% endif %}
