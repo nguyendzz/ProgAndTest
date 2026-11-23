@@ -24,15 +24,30 @@
                 <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">Dashboard</a>
                 <a href="{{ url_for('admin.accounts') }}" class="{% if request.endpoint == 'admin.accounts' %}active{% endif %}">Accounts & Rights</a>
             {% endif %}
-            {% if session.get('role') in ('Staff', 'Admin') %}
+            {% if session.get('role') in ('Staff', 'Admin') and has_endpoint('staff.dashboard') %}
                 <a href="{{ url_for('staff.dashboard') }}" class="{% if request.endpoint == 'staff.dashboard' %}active{% endif %}">Staff Overview</a>
                 <a href="{{ url_for('staff.classes_faculties') }}" class="{% if request.endpoint == 'staff.classes_faculties' %}active{% endif %}">Classes & Faculties</a>
                 <a href="{{ url_for('staff.subjects') }}" class="{% if request.endpoint == 'staff.subjects' %}active{% endif %}">Subjects</a>
                 <a href="{{ url_for('staff.students') }}" class="{% if request.endpoint in ('staff.students', 'staff.view_student') %}active{% endif %}">Student Profiles</a>
                 <a href="{{ url_for('staff.sections') }}" class="{% if request.endpoint == 'staff.sections' %}active{% endif %}">Course Sections</a>
                 <a href="{{ url_for('staff.periods') }}" class="{% if request.endpoint == 'staff.periods' %}active{% endif %}">Registration Periods</a>
-            {% else %}
-                <a href="{{ url_for('auth.portal_home') }}" class="active">Dashboard</a>
+            {% endif %}
+            {% if session.get('role') in ('Staff', 'Admin') %}
+                <a href="{{ url_for('reports.analytics') }}" class="{% if request.endpoint == 'reports.analytics' %}active{% endif %}">Reports & Statistics</a>
+            {% endif %}
+            {% if session.get('role') == 'Lecturer' %}
+                <a href="{{ url_for('lecturer.dashboard') }}" class="{% if request.endpoint == 'lecturer.dashboard' %}active{% endif %}">Lecturer Dashboard</a>
+                <a href="{{ url_for('lecturer.schedule') }}" class="{% if request.endpoint == 'lecturer.schedule' %}active{% endif %}">Teaching Schedule</a>
+                <a href="{{ url_for('lecturer.grade_entry') }}" class="{% if request.endpoint == 'lecturer.grade_entry' %}active{% endif %}">Grade Entry</a>
+            {% endif %}
+            {% if session.get('role') == 'Student' %}
+                {% if has_endpoint('student.dashboard') %}
+                    <a href="{{ url_for('student.dashboard') }}" class="{% if request.endpoint == 'student.dashboard' %}active{% endif %}">Course Registration</a>
+                {% else %}
+                    <a href="{{ url_for('auth.portal_home') }}" class="{% if request.endpoint == 'auth.portal_home' %}active{% endif %}">Dashboard</a>
+                {% endif %}
+                <a href="{{ url_for('academic.class_schedule') }}" class="{% if request.endpoint == 'academic.class_schedule' %}active{% endif %}">Class Schedule</a>
+                <a href="{{ url_for('academic.academic_results') }}" class="{% if request.endpoint == 'academic.academic_results' %}active{% endif %}">Academic Results</a>
             {% endif %}
             <a href="{{ url_for('auth.change_password') }}" class="{% if request.endpoint == 'auth.change_password' %}active{% endif %}">Account Settings</a>
         </aside>
