@@ -25,4 +25,3 @@ Default Admin account: `admin` / `Admin123`
 docker build -t sms-group02 .
 docker run -p 5000:5000 sms-group02
 ```
-****
