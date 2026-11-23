@@ -59,7 +59,7 @@ def seed_academic_dataset(db):
         )
 
 
-def test_lecturer_inherits_user_and_grade_formula_br17(db):
+def test_lecturer_inherits_user_and_grade_formula(db):
     seed_academic_dataset(db)
     lec = Lecturer.find_by_id(db, "GV001")
     assert lec is not None
@@ -70,7 +70,7 @@ def test_lecturer_inherits_user_and_grade_formula_br17(db):
     assert g.calculateFinalScore() == 8.3
 
 
-def test_uc20_uc21_br17_br18_enter_and_compute_grades(client, db):
+def test_enter_and_compute_grades(client, db):
     seed_academic_dataset(db)
     lec = Lecturer.find_by_id(db, "GV001")
 
@@ -94,7 +94,7 @@ def test_uc20_uc21_br17_br18_enter_and_compute_grades(client, db):
     assert b"8.3" in resp.data
 
 
-def test_uc22_view_academic_results_and_gpa(client, db):
+def test_view_academic_results_and_gpa(client, db):
     seed_academic_dataset(db)
     lec = Lecturer.find_by_id(db, "GV001")
     lec.enterGrades(db, "SE104.01", 1, "9.0", "8.5", "8.0")
@@ -112,7 +112,7 @@ def test_uc22_view_academic_results_and_gpa(client, db):
     assert b"8.3" in page.data
 
 
-def test_uc23_view_weekly_class_schedule(client, db):
+def test_view_weekly_class_schedule(client, db):
     seed_academic_dataset(db)
     login_as(client, "gv001", "Lect1234")
     lec_sched = client.get("/lecturer/schedule")
@@ -125,7 +125,7 @@ def test_uc23_view_weekly_class_schedule(client, db):
     assert b"B201" in stu_sched.data
 
 
-def test_uc24_uc25_generate_and_export_reports(client, db):
+def test_generate_and_export_reports(client, db):
     seed_academic_dataset(db)
     lec = Lecturer.find_by_id(db, "GV001")
     lec.enterGrades(db, "SE104.01", 1, "9.0", "8.5", "8.0")
