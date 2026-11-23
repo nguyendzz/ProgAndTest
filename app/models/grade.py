@@ -1,6 +1,6 @@
 from typing import Optional
-
-
+from decimal import Decimal, ROUND_HALF_UP
+from typing import Optional
 class Grade:
     VALID_STATUSES = ("Draft", "Final", "W")
 
