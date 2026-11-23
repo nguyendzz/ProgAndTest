@@ -338,7 +338,15 @@ class User(ABC):
         }
 
     @classmethod
-    def update_role(cls, db, target_user_id: int, new_role: str) -> tuple[bool, str]:
+    def update_role(
+        cls,
+        db,
+        target_user_id: int,
+        new_role: str,
+        actor_user_id: Optional[int] = None,
+    ) -> tuple[bool, str]:
+        if actor_user_id is not None and target_user_id == actor_user_id:
+            return False, "Administrator cannot change their own role."
         if new_role not in cls.VALID_ROLES:
             return False, "Invalid role."
         with db.connection() as conn:
