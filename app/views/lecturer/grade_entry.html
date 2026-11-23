@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Grade Entry & Evaluation - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 16px;">Grade Entry & Evaluation (UC-20 / UC-21)</h1>
+
+<div class="alert alert-info">
+    Auto-Formula (BR-17 / BR-18): <strong>FinalScore = 10% Attendance + 30% Midterm + 60% FinalExam</strong> (Scale: 0.0 - 10.0, rounded to 1 decimal place).
+</div>
+
+<div class="panel">
+    <form method="GET" action="{{ url_for('lecturer.grade_entry') }}" class="filter-bar">
+        <select name="section_id" class="form-control" style="max-width: 420px;">
+            {% for s in sections %}
+                <option value="{{ s.SectionID }}" {% if selected_section and selected_section.SectionID == s.SectionID %}selected{% endif %}>
+                    {{ s.SectionID }} - {{ s.SubjectName }} ({{ s.Semester }})
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Load Roster</button>
+    </form>
+
+    {% if selected_section %}
+        <form method="POST" action="{{ url_for('lecturer.grade_entry') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="section_id" value="{{ selected_section.SectionID }}">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Full Name</th>
+                        <th>Class</th>
+                        <th>Attendance (10%)</th>
+                        <th>Midterm (30%)</th>
+                        <th>Final Exam (60%)</th>
+                        <th>Final Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in roster %}
+                        <tr>
+                            <td>
+                                {{ row.StudentID }}
+                                <input type="hidden" name="enrollment_id" value="{{ row.EnrollmentID }}">
+                            </td>
+                            <td>{{ row.FullName }}</td>
+                            <td>{{ row.ClassID }}</td>
+                            <td>
+                                <input type="number" step="0.1" min="0" max="10"
+                                       name="attendance_{{ row.EnrollmentID }}"
+                                       value="{{ row.AttendanceScore if row.AttendanceScore is not none else '' }}"
+                                       class="form-control" style="width: 90px;"
+                                       {% if row.DisplayStatus == 'W' %}disabled{% endif %}>
+                            </td>
+                            <td>
+                                <input type="number" step="0.1" min="0" max="10"
+                                       name="midterm_{{ row.EnrollmentID }}"
+                                       value="{{ row.MidtermScore if row.MidtermScore is not none else '' }}"
+                                       class="form-control" style="width: 90px;"
+                                       {% if row.DisplayStatus == 'W' %}disabled{% endif %}>
+                            </td>
+                            <td>
+                                <input type="number" step="0.1" min="0" max="10"
+                                       name="final_exam_{{ row.EnrollmentID }}"
+                                       value="{{ row.FinalExamScore if row.FinalExamScore is not none else '' }}"
+                                       class="form-control" style="width: 90px;"
+                                       {% if row.DisplayStatus == 'W' %}disabled{% endif %}>
+                            </td>
+                            <td><strong>{{ row.FinalScore if row.FinalScore is not none else '—' }}</strong></td>
+                            <td>
+                                <span class="badge {% if row.DisplayStatus == 'PASS' %}badge-active{% elif row.DisplayStatus in ('FAIL', 'W') %}badge-locked{% else %}btn-secondary{% endif %}">
+                                    {{ row.DisplayStatus }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="8" class="text-center muted">No enrolled students in this section.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if roster %}
+                <div style="margin-top: 18px; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="submit" name="action" value="draft" class="btn btn-secondary">Save Draft</button>
+                    <button type="submit" name="action" value="compute" class="btn btn-primary">Save & Compute Grades</button>
+                </div>
+            {% endif %}
+        </form>
+    {% else %}
+        <p class="muted">No assigned course sections available.</p>
+    {% endif %}
+</div>
+{% endblock %}
