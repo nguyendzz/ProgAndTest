@@ -49,7 +49,7 @@ def test_database_has_13_tables(db):
     assert tables == expected
 
 
-def test_grade_trigger_br17_and_range_br18(db):
+def test_grade_trigger_and_score_range(db):
     user_s, _ = User.create(db, "sv001", "Pass1234", "Student", "sv001@school.edu")
     user_l, _ = User.create(db, "gv001", "Pass1234", "Lecturer", "gv001@school.edu")
     with db.connection() as conn:
@@ -85,13 +85,13 @@ def test_grade_trigger_br17_and_range_br18(db):
             conn.execute("UPDATE GRADES SET MidtermScore = 11.5 WHERE EnrollmentID = 1")
 
 
-def test_uc01_login_success_and_redirect(client):
+def test_login_success_and_redirect(client):
     resp = login_as(client, "admin", "Admin123")
     assert resp.status_code == 302
     assert "/admin/dashboard" in resp.headers["Location"]
 
 
-def test_uc01_br15_lock_after_5_failed_attempts(client, db):
+def test_login_lock_after_5_failed_attempts(client, db):
     User.create(db, "staff01", "Staff123", "Staff", "staff01@school.edu")
     for _ in range(4):
         resp = login_as(client, "staff01", "WrongPass1")
@@ -104,7 +104,7 @@ def test_uc01_br15_lock_after_5_failed_attempts(client, db):
     assert still_locked.status_code == 403
 
 
-def test_uc02_reset_password_and_expired_token(client, db):
+def test_reset_password_and_expired_token(client, db):
     user, _ = User.create(db, "stu01", "OldPass1", "Student", "stu01@school.edu")
     token = user.create_reset_token(db, expiry_minutes=15)
     future_time = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(
@@ -120,7 +120,7 @@ def test_uc02_reset_password_and_expired_token(client, db):
     assert resp.status_code == 302
 
 
-def test_uc03_logout_invalidates_protected_route(client):
+def test_logout_invalidates_protected_route(client):
     login_as(client, "admin", "Admin123")
     dash = client.get("/admin/dashboard")
     assert dash.status_code == 200
@@ -131,7 +131,7 @@ def test_uc03_logout_invalidates_protected_route(client):
     assert "/login" in after_out.headers["Location"]
 
 
-def test_uc04_admin_manage_accounts_and_self_lock_prevention(client, db):
+def test_admin_manage_accounts_and_self_protection(client, db):
     login_as(client, "admin", "Admin123")
     page = client.get("/admin/accounts")
     assert page.status_code == 200
@@ -171,10 +171,18 @@ def test_uc04_admin_manage_accounts_and_self_lock_prevention(client, db):
     )
     assert b"Administrator cannot lock their own active account." in self_lock.data
 
+    self_role = client.post(
+        f"/admin/accounts/{admin_user.user_id}/role",
+        data={"csrf_token": extract_csrf(self_lock.data), "role": "Student"},
+        follow_redirects=True,
+    )
+    assert b"Administrator cannot change their own role." in self_role.data
+    assert User.find_by_username(db, "admin").role == "Admin"
+
     target = User.find_by_username(db, "lecturer01")
     lock_other = client.post(
         f"/admin/accounts/{target.user_id}/toggle-status",
-        data={"csrf_token": extract_csrf(self_lock.data)},
+        data={"csrf_token": extract_csrf(self_role.data)},
         follow_redirects=True,
     )
     assert b"Account status updated to Locked." in lock_other.data
