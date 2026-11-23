@@ -56,9 +56,13 @@ def seed_registration_dataset(db):
         conn.execute("INSERT INTO SUBJECTS VALUES ('SE104', 'Software Engineering', 4, 'IT001', 'Active')")
         conn.execute("INSERT INTO SUBJECTS VALUES ('NT106', 'Computer Networks', 4, NULL, 'Active')")
         conn.execute("INSERT INTO SUBJECTS VALUES ('DB201', 'Database Systems', 3, NULL, 'Active')")
-        conn.execute("INSERT INTO SUBJECTS VALUES ('AI301', 'Machine Learning', 10, NULL, 'Active')")
-        conn.execute("INSERT INTO SUBJECTS VALUES ('AI302', 'Deep Learning', 10, NULL, 'Active')")
-        conn.execute("INSERT INTO SUBJECTS VALUES ('AI303', 'Robotics', 8, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('CS201', 'Algorithms', 4, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('CS202', 'Operating Systems', 4, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('CS203', 'Computer Architecture', 4, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('CS204', 'Compilers', 4, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('CS205', 'Distributed Systems', 4, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('CS206', 'Cloud Computing', 4, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('CS207', 'Information Security', 4, NULL, 'Active')")
 
         conn.execute(
             """
@@ -91,13 +95,25 @@ def seed_registration_dataset(db):
             "INSERT INTO COURSES VALUES ('DB201.02', 'DB201', 'GV01', 'HK1 2026-2027', 10, 'Thu', '13:00', '15:30', 'A106', 'Open')"
         )
         conn.execute(
-            "INSERT INTO COURSES VALUES ('AI301.01', 'AI301', 'GV01', 'HK1 2026-2027', 40, 'Tue', '13:00', '16:00', 'C101', 'Open')"
+            "INSERT INTO COURSES VALUES ('CS201.01', 'CS201', 'GV01', 'HK1 2026-2027', 40, 'Tue', '07:30', '10:00', 'C101', 'Open')"
         )
         conn.execute(
-            "INSERT INTO COURSES VALUES ('AI302.01', 'AI302', 'GV01', 'HK1 2026-2027', 40, 'Thu', '07:30', '10:30', 'C102', 'Open')"
+            "INSERT INTO COURSES VALUES ('CS202.01', 'CS202', 'GV01', 'HK1 2026-2027', 40, 'Tue', '13:00', '15:30', 'C102', 'Open')"
         )
         conn.execute(
-            "INSERT INTO COURSES VALUES ('AI303.01', 'AI303', 'GV01', 'HK1 2026-2027', 40, 'Fri', '07:30', '10:30', 'C103', 'Open')"
+            "INSERT INTO COURSES VALUES ('CS203.01', 'CS203', 'GV01', 'HK1 2026-2027', 40, 'Wed', '07:30', '10:00', 'C103', 'Open')"
+        )
+        conn.execute(
+            "INSERT INTO COURSES VALUES ('CS204.01', 'CS204', 'GV01', 'HK1 2026-2027', 40, 'Thu', '07:30', '10:00', 'C104', 'Open')"
+        )
+        conn.execute(
+            "INSERT INTO COURSES VALUES ('CS205.01', 'CS205', 'GV01', 'HK1 2026-2027', 40, 'Fri', '07:30', '10:00', 'C105', 'Open')"
+        )
+        conn.execute(
+            "INSERT INTO COURSES VALUES ('CS206.01', 'CS206', 'GV01', 'HK1 2026-2027', 40, 'Fri', '13:00', '15:30', 'C106', 'Open')"
+        )
+        conn.execute(
+            "INSERT INTO COURSES VALUES ('CS207.01', 'CS207', 'GV01', 'HK1 2026-2027', 40, 'Sat', '07:30', '10:00', 'C107', 'Open')"
         )
 
         conn.execute(
@@ -154,13 +170,15 @@ def test_cart_prerequisite_conflict_duplicate_and_credit_limits(db):
     assert ok_conf is False
     assert "Time conflict" in msg_conf
 
-    assert stu1.addToCart(db, "AI301.01")[0] is True
-    assert stu1.addToCart(db, "AI302.01")[0] is True
-    assert stu1.addToCart(db, "AI303.01")[0] is False
+    for sec_id in ("CS201.01", "CS202.01", "CS203.01", "CS204.01", "CS205.01", "CS206.01"):
+        assert stu1.addToCart(db, sec_id)[0] is True
+    ok_over_30, msg_over_30 = stu1.addToCart(db, "CS207.01")
+    assert ok_over_30 is False
+    assert "30" in msg_over_30
 
-    assert stu2.addToCart(db, "AI301.01")[0] is True
-    assert stu2.addToCart(db, "AI302.01")[0] is True
-    ok_limit_25, msg_limit = stu2.addToCart(db, "AI303.01")
+    for sec_id in ("CS201.01", "CS202.01", "CS203.01", "CS204.01", "CS205.01", "CS206.01"):
+        assert stu2.addToCart(db, sec_id)[0] is True
+    ok_limit_25, msg_limit = stu2.addToCart(db, "CS207.01")
     assert ok_limit_25 is False
     assert "25" in msg_limit
 
@@ -248,7 +266,7 @@ def test_drop_withdraw_and_after_deadline(client, db):
     stu1 = Student.find_by_id(db, "SV01")
     stu1.addToCart(db, "SE104.01")
     stu1.addToCart(db, "DB201.01")
-    stu1.addToCart(db, "AI301.01")
+    stu1.addToCart(db, "CS201.01")
     res = stu1.confirmRegistration(db, "HK1 2026-2027")
     assert res["ok"] is True
 
@@ -270,7 +288,7 @@ def test_drop_withdraw_and_after_deadline(client, db):
         ).fetchone()[0]
     assert g_status == "W"
 
-    ok_late, msg_late = stu1.dropCourse(db, "AI301.01", action_date=date(2027, 2, 5))
+    ok_late, msg_late = stu1.dropCourse(db, "CS201.01", action_date=date(2027, 2, 5))
     assert ok_late is False
     assert "deadline has passed" in msg_late.lower()
 

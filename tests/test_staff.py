@@ -85,6 +85,10 @@ def test_subjects_and_circular_prerequisite(db):
     sub_b, _ = Subject.create(db, "IT002", "Data Structures", 4, "IT001")
     assert sub_b is not None
 
+    over_cr, over_msg = Subject.create(db, "IT009", "Too Many Credits", 5, None)
+    assert over_cr is None
+    assert "between 1 and 4" in over_msg
+
     dup, dup_msg = Subject.create(db, "IT001", "Duplicate", 3, None)
     assert dup is None
     assert "already exists" in dup_msg
@@ -246,3 +250,24 @@ def test_staff_routes_rbac_blocks_student(client, db):
     login_as(client, "stu88", "StudPass1")
     resp = client.get("/staff/subjects")
     assert resp.status_code == 403
+
+
+def test_staff_create_lecturer_profile(client, db):
+    seed_staff_and_lecturer(db)
+    login_as(client, "staff01", "Staff123")
+    page = client.get("/staff/lecturers")
+    assert page.status_code == 200
+    csrf = extract_csrf(page.data)
+    resp = client.post(
+        "/staff/lecturers/create",
+        data={
+            "csrf_token": csrf,
+            "lecturer_id": "GV009",
+            "full_name": "Dr. Le Minh",
+            "email": "gv009@school.edu",
+            "faculty_id": "IT",
+        },
+        follow_redirects=True,
+    )
+    assert b"Lecturer profile and linked account created successfully." in resp.data
+    assert User.find_by_username(db, "gv009") is not None

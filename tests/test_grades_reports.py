@@ -40,13 +40,17 @@ def seed_academic_dataset(db):
             "INSERT INTO STUDENTS VALUES ('SV001', ?, 'IT_01', 'Nguyen Van A', '2007-04-29', 'sv001@school.edu', '0901234567', 'Active')",
             (stu_user.user_id,),
         )
-        conn.execute("INSERT INTO SUBJECTS VALUES ('SE104', 'Software Engineering', 4, NULL, 'Active')")
-        conn.execute("INSERT INTO SUBJECTS VALUES ('DB201', 'Database Systems', 3, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('SE104', 'Software Engineering', 3, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('DB201', 'Database Systems', 2, NULL, 'Active')")
+        conn.execute("INSERT INTO SUBJECTS VALUES ('GDTC1', 'Physical Education 1', 1, NULL, 'Active')")
         conn.execute(
             "INSERT INTO COURSES VALUES ('SE104.01', 'SE104', 'GV001', 'HK1 2026-2027', 60, 'Mon', '07:30', '10:30', 'B201', 'Open')"
         )
         conn.execute(
             "INSERT INTO COURSES VALUES ('DB201.01', 'DB201', 'GV001', 'HK1 2026-2027', 50, 'Wed', '13:00', '15:30', 'A105', 'Open')"
+        )
+        conn.execute(
+            "INSERT INTO COURSES VALUES ('GDTC1.01', 'GDTC1', 'GV001', 'HK1 2026-2027', 50, 'Fri', '07:30', '09:30', 'GYM1', 'Open')"
         )
         conn.execute(
             "INSERT INTO ENROLLMENTS (StudentID, SectionID, Status, ConfirmationNumber) VALUES ('SV001', 'SE104.01', 'Enrolled', 'REG-2026HK1-00001')"
@@ -55,19 +59,32 @@ def seed_academic_dataset(db):
             "INSERT INTO ENROLLMENTS (StudentID, SectionID, Status, ConfirmationNumber) VALUES ('SV001', 'DB201.01', 'Enrolled', 'REG-2026HK1-00002')"
         )
         conn.execute(
+            "INSERT INTO ENROLLMENTS (StudentID, SectionID, Status, ConfirmationNumber) VALUES ('SV001', 'GDTC1.01', 'Enrolled', 'REG-2026HK1-00003')"
+        )
+        conn.execute(
             "INSERT INTO WAITLIST (StudentID, SectionID, QueuePosition, Status) VALUES ('SV001', 'DB201.01', 1, 'Waiting')"
         )
 
 
-def test_lecturer_inherits_user_and_grade_formula(db):
+def test_lecturer_inherits_user_and_grade_scale_conversion(db):
     seed_academic_dataset(db)
     lec = Lecturer.find_by_id(db, "GV001")
     assert lec is not None
     assert isinstance(lec, User)
-    assert len(lec.viewAssignedSections(db)) == 2
+    assert len(lec.viewAssignedSections(db)) == 3
 
     g = Grade(None, 1, 9.0, 8.5, 8.0)
+    assert g.process_score == 8.6
     assert g.calculateFinalScore() == 8.3
+    assert Grade.score10_to_letter_and_gpa4(9.5) == ("A+", 4.0)
+    assert Grade.score10_to_letter_and_gpa4(8.7) == ("A", 4.0)
+    assert Grade.score10_to_letter_and_gpa4(8.2) == ("B+", 3.5)
+    assert Grade.score10_to_letter_and_gpa4(7.5) == ("B", 3.0)
+    assert Grade.score10_to_letter_and_gpa4(6.5) == ("C+", 2.5)
+    assert Grade.score10_to_letter_and_gpa4(5.7) == ("C", 2.0)
+    assert Grade.score10_to_letter_and_gpa4(5.2) == ("D+", 1.5)
+    assert Grade.score10_to_letter_and_gpa4(4.5) == ("D", 1.0)
+    assert Grade.score10_to_letter_and_gpa4(3.9) == ("F", 0.0)
 
 
 def test_enter_and_compute_grades(client, db):
@@ -83,33 +100,38 @@ def test_enter_and_compute_grades(client, db):
     assert partial_grade.grade_status == "Draft"
     assert partial_grade.final_score is None
 
-    final_grade, _ = lec.enterGrades(db, "SE104.01", 1, "9.0", "8.5", "8.0")
+    final_grade, _ = lec.enterGrades(db, "SE104.01", 1, "8.0", "8.0", "8.3")
     assert final_grade is not None
-    assert final_grade.final_score == 8.3
+    assert final_grade.final_score == 8.2
+    assert final_grade.letter_grade == "B+"
+    assert final_grade.gpa4_score == 3.5
     assert final_grade.grade_status == "Final"
 
     login_as(client, "gv001", "Lect1234")
     resp = client.get("/lecturer/grades?section_id=SE104.01")
     assert resp.status_code == 200
-    assert b"8.3" in resp.data
+    assert b"8.2" in resp.data
+    assert b"B+" in resp.data
 
 
-def test_view_academic_results_and_gpa(client, db):
+def test_view_academic_results_and_gpa_scale_4(client, db):
     seed_academic_dataset(db)
     lec = Lecturer.find_by_id(db, "GV001")
-    lec.enterGrades(db, "SE104.01", 1, "9.0", "8.5", "8.0")
-    lec.enterGrades(db, "DB201.01", 2, "5.0", "3.5", "3.0")
+    lec.enterGrades(db, "SE104.01", 1, "8.0", "8.0", "8.3")
+    lec.enterGrades(db, "DB201.01", 2, "7.5", "7.5", "7.5")
+    lec.enterGrades(db, "GDTC1.01", 3, "5.0", "5.0", "5.0")
 
     results = Grade.get_student_academic_results(db, "SV001")
-    assert results["cumulative_credits_passed"] == 4
-    expected_gpa = round((8.3 * 4 + 3.4 * 3) / 7, 2)
-    assert results["cumulative_gpa"] == expected_gpa
+    assert results["cumulative_credits_passed"] == 6
+    assert results["cumulative_gpa"] == 3.3
+    assert results["academic_standing"] == "Good"
 
     login_as(client, "sv001", "Stud1234")
     page = client.get("/academic/results")
     assert page.status_code == 200
-    assert b"SE104" in page.data
-    assert b"8.3" in page.data
+    assert b"3.30" in page.data
+    assert b"B+" in page.data
+    assert b"Non-GPA" in page.data
 
 
 def test_view_weekly_class_schedule(client, db):

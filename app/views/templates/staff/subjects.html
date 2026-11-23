@@ -16,8 +16,8 @@
             <input name="subject_name" type="text" class="form-control" required>
         </div>
         <div>
-            <label>Credits (1-10)</label>
-            <input name="credits" type="number" min="1" max="10" value="3" class="form-control" required>
+            <label>Credits (1-4)</label>
+            <input name="credits" type="number" min="1" max="4" value="3" class="form-control" required>
         </div>
         <div>
             <label>Prerequisite (Optional)</label>
@@ -40,9 +40,7 @@
         <thead>
             <tr>
                 <th>Subject ID</th>
-                <th>Subject Name</th>
-                <th>Credits</th>
-                <th>Prerequisite</th>
+                <th>Edit Details (Name / Credits 1-4 / Prerequisite)</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -50,10 +48,23 @@
         <tbody>
             {% for s in subjects %}
                 <tr>
-                    <td>{{ s.subject_id }}</td>
-                    <td>{{ s.subject_name }}</td>
-                    <td>{{ s.credits }}</td>
-                    <td>{{ s.prerequisite_id or '—' }}</td>
+                    <td><strong>{{ s.subject_id }}</strong></td>
+                    <td>
+                        <form method="POST" action="{{ url_for('staff.update_subject', subject_id=s.subject_id) }}" class="inline-form" style="flex-wrap: wrap;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input name="subject_name" type="text" class="form-control" style="width: 220px;" value="{{ s.subject_name }}" required>
+                            <input name="credits" type="number" min="1" max="4" class="form-control" style="width: 75px;" value="{{ s.credits }}" required>
+                            <select name="prerequisite_id" class="form-control" style="width: 150px;">
+                                <option value="">No Prereq</option>
+                                {% for opt in subjects %}
+                                    {% if opt.subject_id != s.subject_id %}
+                                        <option value="{{ opt.subject_id }}" {% if s.prerequisite_id == opt.subject_id %}selected{% endif %}>{{ opt.subject_id }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+                        </form>
+                    </td>
                     <td>
                         <span class="badge {% if s.status == 'Active' %}badge-active{% else %}badge-locked{% endif %}">
                             {{ s.status }}
@@ -70,7 +81,7 @@
                     </td>
                 </tr>
             {% else %}
-                <tr><td colspan="6" class="text-center muted">No subjects available.</td></tr>
+                <tr><td colspan="4" class="text-center muted">No subjects available.</td></tr>
             {% endfor %}
         </tbody>
     </table>

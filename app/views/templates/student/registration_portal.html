@@ -134,8 +134,8 @@
             <div class="alert {% if credit_summary.projected_credits > credit_summary.max_credits %}alert-danger{% else %}alert-success{% endif %}">
                 <div>Enrolled Credits: <strong>{{ credit_summary.enrolled_credits }}</strong> | Cart Credits: <strong>{{ credit_summary.cart_credits }}</strong></div>
                 <div>Total Projected: <strong>{{ credit_summary.projected_credits }} / {{ credit_summary.max_credits }}</strong></div>
-                {% if credit_summary.previous_gpa >= 8.0 %}
-                    <div class="muted">Honors credit limit active (Previous GPA: {{ credit_summary.previous_gpa }}).</div>
+                {% if credit_summary.previous_gpa >= 3.2 %}
+                    <div class="muted">Honors credit limit active (Previous GPA: {{ '%.2f'|format(credit_summary.previous_gpa) }} / 4.00).</div>
                 {% endif %}
             </div>
 

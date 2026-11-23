@@ -4,7 +4,11 @@
 <h1 style="margin-bottom: 16px;">Grade Entry & Evaluation</h1>
 
 <div class="alert alert-info">
-    Auto-Formula: <strong>FinalScore = 10% Attendance + 30% Midterm + 60% FinalExam</strong> (Scale: 0.0 - 10.0, rounded to 1 decimal place).
+    <strong>Grading Scale:</strong> Process Score (40%, scale 10.0) = 25% Attendance + 75% Midterm |
+    Final Score (scale 10.0) = <strong>10% Attendance + 30% Midterm + 60% Final Exam</strong>.<br>
+    <strong>Letter & GPA 4.0:</strong>
+    A+ (9.0-10.0 = 4.0) | A (8.5-8.9 = 4.0) | B+ (8.0-8.4 = 3.5) | B (7.0-7.9 = 3.0) |
+    C+ (6.0-6.9 = 2.5) | C (5.5-5.9 = 2.0) | D+ (5.0-5.4 = 1.5) | D (4.0-4.9 = 1.0) | F (&lt; 4.0 = 0.0, Fail).
 </div>
 
 <div class="panel">
@@ -28,11 +32,13 @@
                     <tr>
                         <th>Student ID</th>
                         <th>Full Name</th>
-                        <th>Class</th>
                         <th>Attendance (10%)</th>
                         <th>Midterm (30%)</th>
+                        <th>Process (10.0)</th>
                         <th>Final Exam (60%)</th>
-                        <th>Final Score</th>
+                        <th>Final (10.0)</th>
+                        <th>Letter</th>
+                        <th>GPA (4.0)</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -44,29 +50,31 @@
                                 <input type="hidden" name="enrollment_id" value="{{ row.EnrollmentID }}">
                             </td>
                             <td>{{ row.FullName }}</td>
-                            <td>{{ row.ClassID }}</td>
                             <td>
                                 <input type="number" step="0.1" min="0" max="10"
                                        name="attendance_{{ row.EnrollmentID }}"
                                        value="{{ row.AttendanceScore if row.AttendanceScore is not none else '' }}"
-                                       class="form-control" style="width: 90px;"
+                                       class="form-control" style="width: 82px;"
                                        {% if row.DisplayStatus == 'W' %}disabled{% endif %}>
                             </td>
                             <td>
                                 <input type="number" step="0.1" min="0" max="10"
                                        name="midterm_{{ row.EnrollmentID }}"
                                        value="{{ row.MidtermScore if row.MidtermScore is not none else '' }}"
-                                       class="form-control" style="width: 90px;"
+                                       class="form-control" style="width: 82px;"
                                        {% if row.DisplayStatus == 'W' %}disabled{% endif %}>
                             </td>
+                            <td>{{ row.ProcessScore if row.ProcessScore is not none else '—' }}</td>
                             <td>
                                 <input type="number" step="0.1" min="0" max="10"
                                        name="final_exam_{{ row.EnrollmentID }}"
                                        value="{{ row.FinalExamScore if row.FinalExamScore is not none else '' }}"
-                                       class="form-control" style="width: 90px;"
+                                       class="form-control" style="width: 82px;"
                                        {% if row.DisplayStatus == 'W' %}disabled{% endif %}>
                             </td>
                             <td><strong>{{ row.FinalScore if row.FinalScore is not none else '—' }}</strong></td>
+                            <td><strong>{{ row.LetterGrade or '—' }}</strong></td>
+                            <td>{{ '%.1f'|format(row.GPA4) if row.GPA4 is not none else '—' }}</td>
                             <td>
                                 <span class="badge {% if row.DisplayStatus == 'PASS' %}badge-active{% elif row.DisplayStatus in ('FAIL', 'W') %}badge-locked{% else %}btn-secondary{% endif %}">
                                     {{ row.DisplayStatus }}
@@ -74,7 +82,7 @@
                             </td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="8" class="text-center muted">No enrolled students in this section.</td></tr>
+                        <tr><td colspan="10" class="text-center muted">No enrolled students in this section.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

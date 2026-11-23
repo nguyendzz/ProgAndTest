@@ -6,6 +6,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from app.models.grade import Grade
 
 
 class ReportService:
@@ -182,25 +183,33 @@ class ReportService:
                     "Subject Name",
                     "Semester",
                     "Graded",
-                    "Avg Score",
+                    "Avg (10.0)",
+                    "Avg Letter / GPA (4.0)",
                     "Pass",
                     "Fail",
                     "Withdrawn (W)",
                 ]
-                data_rows = [
-                    [
-                        r["SectionID"],
-                        r["SubjectID"],
-                        r["SubjectName"],
-                        r["Semester"],
-                        r["GradedCount"],
-                        r["AvgScore"] if r["AvgScore"] is not None else "—",
-                        r["PassCount"],
-                        r["FailCount"],
-                        r["WithdrawCount"],
-                    ]
-                    for r in rows
-                ]
+                data_rows = []
+                for r in rows:
+                    if r["AvgScore"] is not None:
+                        avg_letter, avg_gpa4 = Grade.score10_to_letter_and_gpa4(float(r["AvgScore"]))
+                        gpa_cell = f"{avg_letter} ({avg_gpa4:.1f})"
+                    else:
+                        gpa_cell = "—"
+                    data_rows.append(
+                        [
+                            r["SectionID"],
+                            r["SubjectID"],
+                            r["SubjectName"],
+                            r["Semester"],
+                            r["GradedCount"],
+                            r["AvgScore"] if r["AvgScore"] is not None else "—",
+                            gpa_cell,
+                            r["PassCount"],
+                            r["FailCount"],
+                            r["WithdrawCount"],
+                        ]
+                    )
                 total_pass = sum(r["PassCount"] for r in rows)
                 total_fail = sum(r["FailCount"] for r in rows)
                 total_eval = total_pass + total_fail

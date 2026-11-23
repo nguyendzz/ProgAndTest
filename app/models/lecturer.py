@@ -1,6 +1,8 @@
+import re
 from typing import Optional
 from app.models.grade import Grade
 from app.models.user import User
+from app.utils.security import SecurityService
 
 
 class Lecturer(User):
@@ -50,6 +52,82 @@ class Lecturer(User):
     @property
     def full_name(self) -> str:
         return self._fullName
+
+
+    EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+
+    @classmethod
+    def get_all(cls, db) -> list[dict]:
+        with db.connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT l.LecturerID, l.UserID, l.FacultyID, l.FullName, l.Email,
+                       f.FacultyName, u.Username, u.Status AS AccountStatus
+                FROM LECTURERS l
+                JOIN FACULTIES f ON l.FacultyID = f.FacultyID
+                JOIN USERS u ON l.UserID = u.UserID
+                ORDER BY l.LecturerID ASC
+                """
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    @classmethod
+    def create_lecturer(
+        cls,
+        db,
+        lecturer_id: str,
+        full_name: str,
+        email: str,
+        faculty_id: str,
+        default_password: str = "Lect1234",
+    ) -> tuple[Optional["Lecturer"], str]:
+        lid = lecturer_id.strip().upper()
+        name = full_name.strip()
+        email_clean = email.strip().lower()
+        fid = faculty_id.strip().upper()
+
+        if not all([lid, name, email_clean, fid]):
+            return None, "Lecturer ID, Full Name, Email, and Faculty are required."
+        if len(lid) > 10:
+            return None, "Lecturer ID must be at most 10 characters."
+        if not cls.EMAIL_PATTERN.match(email_clean):
+            return None, "Invalid email format."
+
+        with db.connection() as conn:
+            if conn.execute(
+                "SELECT 1 FROM LECTURERS WHERE LecturerID = ?", (lid,)
+            ).fetchone():
+                return None, "Lecturer ID already exists."
+            if not conn.execute(
+                "SELECT 1 FROM FACULTIES WHERE FacultyID = ?", (fid,)
+            ).fetchone():
+                return None, "Selected faculty does not exist."
+            if conn.execute(
+                "SELECT 1 FROM USERS WHERE LOWER(Username) = LOWER(?)", (lid,)
+            ).fetchone():
+                return None, "Linked username already exists."
+            if conn.execute(
+                "SELECT 1 FROM USERS WHERE LOWER(Email) = LOWER(?)", (email_clean,)
+            ).fetchone():
+                return None, "Email already registered."
+
+            pw_hash = SecurityService.hash_password(default_password)
+            cur = conn.execute(
+                """
+                INSERT INTO USERS (Username, PasswordHash, Role, Status, Email)
+                VALUES (?, ?, 'Lecturer', 'Active', ?)
+                """,
+                (lid.lower(), pw_hash, email_clean),
+            )
+            uid = cur.lastrowid
+            conn.execute(
+                """
+                INSERT INTO LECTURERS (LecturerID, UserID, FacultyID, FullName, Email)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (lid, uid, fid, name, email_clean),
+            )
+        return cls.find_by_id(db, lid), "Lecturer profile and linked account created successfully."
 
     def get_dashboard_endpoint(self) -> str:
         return "lecturer.dashboard"
@@ -168,14 +246,21 @@ class Lecturer(User):
         roster = []
         for r in rows:
             item = dict(r)
+            item["ProcessScore"] = Grade.compute_process_score(
+                item["AttendanceScore"], item["MidtermScore"]
+            )
+            item["LetterGrade"] = None
+            item["GPA4"] = None
             if item["EnrollmentStatus"] == "Withdrawn" or item["GradeStatus"] == "W":
                 item["DisplayStatus"] = "W"
+                item["LetterGrade"] = "W"
             elif item["FinalScore"] is None or item["GradeStatus"] == "Draft":
                 item["DisplayStatus"] = "DRAFT"
-            elif float(item["FinalScore"]) >= 4.0:
-                item["DisplayStatus"] = "PASS"
             else:
-                item["DisplayStatus"] = "FAIL"
+                letter, gpa4 = Grade.score10_to_letter_and_gpa4(float(item["FinalScore"]))
+                item["LetterGrade"] = letter
+                item["GPA4"] = gpa4
+                item["DisplayStatus"] = "PASS" if float(item["FinalScore"]) >= 4.0 else "FAIL"
             roster.append(item)
         return roster
 

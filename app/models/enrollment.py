@@ -1,5 +1,7 @@
 from datetime import date, datetime
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
+from app.models.grade import Grade
 from app.models.semester_registration import SemesterRegistration
 from app.models.waitlist import Waitlist
 
@@ -9,7 +11,7 @@ class Enrollment:
     DEFAULT_MIN_CREDITS = 14
     DEFAULT_MAX_CREDITS = 25
     HONOR_MAX_CREDITS = 30
-    HONOR_GPA_THRESHOLD = 8.0
+    HONOR_GPA_THRESHOLD = 3.2
 
     def __init__(
         self,
@@ -74,7 +76,7 @@ class Enrollment:
     ) -> float:
         rows = conn.execute(
             """
-            SELECT c.Semester, g.FinalScore, s.Credits
+            SELECT c.Semester, s.SubjectID, s.SubjectName, g.FinalScore, s.Credits
             FROM ENROLLMENTS e
             JOIN COURSES c ON e.SectionID = c.SectionID
             JOIN SUBJECTS s ON c.SubjectID = s.SubjectID
@@ -90,15 +92,20 @@ class Enrollment:
         if not rows:
             return 0.0
         latest_semester = rows[0]["Semester"]
-        weighted_sum = 0.0
+        weighted_sum = Decimal("0")
         total_credits = 0
         for r in rows:
             if r["Semester"] != latest_semester:
                 break
+            if Grade.is_excluded_from_gpa(r["SubjectID"], r["SubjectName"]):
+                continue
+            _, gpa4 = Grade.score10_to_letter_and_gpa4(float(r["FinalScore"]))
             credits = int(r["Credits"])
-            weighted_sum += float(r["FinalScore"]) * credits
+            weighted_sum += Decimal(str(gpa4)) * credits
             total_credits += credits
-        return round(weighted_sum / total_credits, 2) if total_credits > 0 else 0.0
+        if total_credits <= 0:
+            return 0.0
+        return float((weighted_sum / Decimal(total_credits)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
     @classmethod
     def get_allowed_credit_bounds_conn(

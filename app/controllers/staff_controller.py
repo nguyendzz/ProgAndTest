@@ -10,6 +10,7 @@ from flask import (
 from app.models.administrative_class import AdministrativeClass
 from app.models.course_section import CourseSection
 from app.models.faculty import Faculty
+from app.models.lecturer import Lecturer
 from app.models.registration_period import RegistrationPeriod
 from app.models.student_profile import StudentProfileManager
 from app.models.subject import Subject
@@ -363,3 +364,47 @@ def update_period_status(period_id: int):
     )
     flash(message, "success" if ok else "danger")
     return redirect(url_for("staff.periods"))
+
+
+@staff_bp.route("/lecturers", methods=["GET"])
+@role_required("Staff", "Admin")
+def lecturers():
+    db = current_app.extensions["db"]
+    lecturer_list = Lecturer.get_all(db)
+    faculties = Faculty.get_all(db)
+    return render_template(
+        "staff/lecturers.html",
+        lecturers=lecturer_list,
+        faculties=faculties,
+    )
+
+
+@staff_bp.route("/lecturers/create", methods=["POST"])
+@role_required("Staff", "Admin")
+@csrf_protect
+def create_lecturer():
+    db = current_app.extensions["db"]
+    lec, message = Lecturer.create_lecturer(
+        db,
+        request.form.get("lecturer_id", ""),
+        request.form.get("full_name", ""),
+        request.form.get("email", ""),
+        request.form.get("faculty_id", ""),
+    )
+    flash(message, "success" if lec else "danger")
+    return redirect(url_for("staff.lecturers"))
+
+
+@staff_bp.route("/lecturers/<lecturer_id>/faculty", methods=["POST"])
+@role_required("Staff", "Admin")
+@csrf_protect
+def assign_lecturer_faculty(lecturer_id: str):
+    db = current_app.extensions["db"]
+    faculty_id = request.form.get("faculty_id", "")
+    fac = Faculty.find_by_id(db, faculty_id)
+    if not fac:
+        flash("Selected faculty does not exist.", "danger")
+        return redirect(url_for("staff.lecturers"))
+    ok, message = fac.assignLecturer(db, lecturer_id)
+    flash(message, "success" if ok else "danger")
+    return redirect(url_for("staff.lecturers"))

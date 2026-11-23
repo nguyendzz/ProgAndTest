@@ -114,9 +114,9 @@ class Subject:
         try:
             credits_int = int(credits)
         except (TypeError, ValueError):
-            return None, "Credits must be an integer between 1 and 10."
-        if credits_int < 1 or credits_int > 10:
-            return None, "Credits must be between 1 and 10."
+            return None, "Credits must be an integer between 1 and 4."
+        if credits_int < 1 or credits_int > 4:
+            return None, "Credits must be between 1 and 4."
         with db.connection() as conn:
             if conn.execute(
                 "SELECT 1 FROM SUBJECTS WHERE SubjectID = ?", (sid,)
@@ -160,9 +160,9 @@ class Subject:
         try:
             credits_int = int(credits)
         except (TypeError, ValueError):
-            return False, "Credits must be an integer between 1 and 10."
-        if credits_int < 1 or credits_int > 10:
-            return False, "Credits must be between 1 and 10."
+            return False, "Credits must be an integer between 1 and 4."
+        if credits_int < 1 or credits_int > 4:
+            return False, "Credits must be between 1 and 4."
         with db.connection() as conn:
             if not conn.execute(
                 "SELECT 1 FROM SUBJECTS WHERE SubjectID = ?", (sid,)

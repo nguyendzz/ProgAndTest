@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Lecturer Management - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 20px;">Lecturer Management</h1>
+
+<div class="panel">
+    <div class="panel-title">+ Add Lecturer Profile</div>
+    <form method="POST" action="{{ url_for('staff.create_lecturer') }}" class="grid-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label>Lecturer ID</label>
+            <input name="lecturer_id" type="text" maxlength="10" class="form-control" placeholder="e.g. GV001" required>
+        </div>
+        <div>
+            <label>Full Name</label>
+            <input name="full_name" type="text" class="form-control" required>
+        </div>
+        <div>
+            <label>Email</label>
+            <input name="email" type="email" class="form-control" required>
+        </div>
+        <div>
+            <label>Faculty</label>
+            <select name="faculty_id" class="form-control" required>
+                <option value="">-- Select Faculty --</option>
+                {% for f in faculties %}
+                    <option value="{{ f.faculty_id }}">{{ f.faculty_id }} - {{ f.faculty_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">+ Add Lecturer</button>
+        </div>
+    </form>
+    <p class="muted" style="margin-top: 10px;">Default linked account password: <strong>Lect1234</strong> (username = lowercase Lecturer ID).</p>
+</div>
+
+<div class="panel">
+    <div class="panel-title">Lecturers Directory</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Lecturer ID</th>
+                <th>Full Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Faculty</th>
+                <th>Account Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in lecturers %}
+                <tr>
+                    <td>{{ l.LecturerID }}</td>
+                    <td>{{ l.FullName }}</td>
+                    <td>{{ l.Username }}</td>
+                    <td>{{ l.Email }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('staff.assign_lecturer_faculty', lecturer_id=l.LecturerID) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="faculty_id" class="form-control" style="width: 140px; padding: 6px;">
+                                {% for f in faculties %}
+                                    <option value="{{ f.faculty_id }}" {% if f.faculty_id == l.FacultyID %}selected{% endif %}>{{ f.faculty_id }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-secondary btn-sm">Assign</button>
+                        </form>
+                    </td>
+                    <td>
+                        <span class="badge {% if l.AccountStatus == 'Active' %}badge-active{% else %}badge-locked{% endif %}">
+                            {{ l.AccountStatus }}
+                        </span>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center muted">No lecturers registered yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
