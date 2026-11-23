@@ -45,7 +45,7 @@ def schedule():
         "lecturer/schedule.html",
         schedule_data=schedule_data,
         selected_semester=semester,
-        portal_title="Teaching Schedule (UC-23)",
+        portal_title="Teaching Schedule",
     )
 
 
@@ -159,5 +159,5 @@ def class_schedule():
         "lecturer/schedule.html",
         schedule_data=schedule_data,
         selected_semester=semester,
-        portal_title="Weekly Class Schedule (UC-23)",
+        portal_title="Weekly Class Schedule",
     )
