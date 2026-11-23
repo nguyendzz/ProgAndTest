@@ -5,6 +5,7 @@ from app.utils.decorators import get_csrf_token
 from app.utils.security import SecurityService
 from app.controllers.auth_controller import auth_bp
 from app.controllers.admin_controller import admin_bp
+from app.controllers.staff_controller import staff_bp
 
 
 def create_app(config_class=Config, init_db: bool = True) -> Flask:
@@ -24,6 +25,7 @@ def create_app(config_class=Config, init_db: bool = True) -> Flask:
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(staff_bp)
 
     @app.context_processor
     def inject_globals():
