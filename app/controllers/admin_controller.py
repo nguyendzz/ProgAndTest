@@ -80,7 +80,7 @@ def create_account():
 def update_account_role(user_id: int):
     db = current_app.extensions["db"]
     new_role = request.form.get("role", "")
-    ok, message = User.update_role(db, user_id, new_role)
+    ok, message = User.update_role(db, user_id, new_role, session["user_id"])
     flash(message, "success" if ok else "danger")
     return redirect(url_for("admin.accounts"))
 
