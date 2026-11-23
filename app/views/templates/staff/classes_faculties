@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Manage Classes & Faculties - Student Manager System{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 20px;">Manage Classes & Faculties (UC-05)</h1>
+
+<div class="panel">
+    <div class="panel-title">+ Add Faculty</div>
+    <form method="POST" action="{{ url_for('staff.create_faculty') }}" class="grid-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label>Faculty ID</label>
+            <input name="faculty_id" type="text" maxlength="10" class="form-control" placeholder="e.g. IT" required>
+        </div>
+        <div>
+            <label>Faculty Name</label>
+            <input name="faculty_name" type="text" class="form-control" placeholder="Information Technology" required>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">Add Faculty</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-title">Faculties List</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Faculty ID</th>
+                <th>Faculty Name</th>
+                <th>Update Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in faculties %}
+                <tr>
+                    <td>{{ f.faculty_id }}</td>
+                    <td>{{ f.faculty_name }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('staff.update_faculty', faculty_id=f.faculty_id) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input name="faculty_name" type="text" class="form-control" value="{{ f.faculty_name }}" required>
+                            <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="3" class="text-center muted">No faculties yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="panel">
+    <div class="panel-title">+ Add Administrative Class</div>
+    <form method="POST" action="{{ url_for('staff.create_class') }}" class="grid-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label>Class ID</label>
+            <input name="class_id" type="text" maxlength="10" class="form-control" placeholder="e.g. IT_01" required>
+        </div>
+        <div>
+            <label>Faculty</label>
+            <select name="faculty_id" class="form-control" required>
+                <option value="">-- Select Faculty --</option>
+                {% for f in faculties %}
+                    <option value="{{ f.faculty_id }}">{{ f.faculty_id }} - {{ f.faculty_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Class Name</label>
+            <input name="class_name" type="text" class="form-control" placeholder="Information Technology 01" required>
+        </div>
+        <div>
+            <label>Academic Year</label>
+            <input name="academic_year" type="text" class="form-control" placeholder="2026-2030" required>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">Add Class</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-title">Administrative Classes</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Class ID</th>
+                <th>Faculty</th>
+                <th>Class Name</th>
+                <th>Academic Year</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in classes %}
+                <tr>
+                    <td>{{ c.class_id }}</td>
+                    <td>{{ c.faculty_id }} ({{ c.faculty_name }})</td>
+                    <td>{{ c.class_name }}</td>
+                    <td>{{ c.academic_year }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('staff.update_class', class_id=c.class_id) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="faculty_id" class="form-control" style="width: 110px;">
+                                {% for f in faculties %}
+                                    <option value="{{ f.faculty_id }}" {% if f.faculty_id == c.faculty_id %}selected{% endif %}>{{ f.faculty_id }}</option>
+                                {% endfor %}
+                            </select>
+                            <input name="class_name" type="text" class="form-control" value="{{ c.class_name }}" required>
+                            <input name="academic_year" type="text" class="form-control" style="width: 110px;" value="{{ c.academic_year }}" required>
+                            <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="text-center muted">No classes found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
