@@ -5,7 +5,8 @@ from app.utils.decorators import get_csrf_token
 from app.utils.security import SecurityService
 from app.controllers.auth_controller import auth_bp
 from app.controllers.admin_controller import admin_bp
-from app.controllers.staff_controller import staff_bp
+from app.controllers.lecturer_controller import academic_bp, lecturer_bp
+from app.controllers.report_controller import report_bp
 
 
 def create_app(config_class=Config, init_db: bool = True) -> Flask:
@@ -25,11 +26,30 @@ def create_app(config_class=Config, init_db: bool = True) -> Flask:
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(staff_bp)
+    app.register_blueprint(lecturer_bp)
+    app.register_blueprint(academic_bp)
+    app.register_blueprint(report_bp)
+
+    try:
+        from app.controllers.staff_controller import staff_bp
+
+        app.register_blueprint(staff_bp)
+    except ImportError:
+        pass
+
+    try:
+        from app.controllers.student_controller import student_bp
+
+        app.register_blueprint(student_bp)
+    except ImportError:
+        pass
 
     @app.context_processor
     def inject_globals():
-        return {"csrf_token": get_csrf_token}
+        return {
+            "csrf_token": get_csrf_token,
+            "has_endpoint": lambda ep: ep in app.view_functions,
+        }
 
     @app.after_request
     def add_security_headers(response):
