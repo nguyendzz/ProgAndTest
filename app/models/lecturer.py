@@ -249,18 +249,14 @@ class Lecturer(User):
             item["ProcessScore"] = Grade.compute_process_score(
                 item["AttendanceScore"], item["MidtermScore"]
             )
-            item["LetterGrade"] = None
-            item["GPA4"] = None
             if item["EnrollmentStatus"] == "Withdrawn" or item["GradeStatus"] == "W":
                 item["DisplayStatus"] = "W"
-                item["LetterGrade"] = "W"
             elif item["FinalScore"] is None or item["GradeStatus"] == "Draft":
                 item["DisplayStatus"] = "DRAFT"
+            elif float(item["FinalScore"]) >= 4.0:
+                item["DisplayStatus"] = "PASS"
             else:
-                letter, gpa4 = Grade.score10_to_letter_and_gpa4(float(item["FinalScore"]))
-                item["LetterGrade"] = letter
-                item["GPA4"] = gpa4
-                item["DisplayStatus"] = "PASS" if float(item["FinalScore"]) >= 4.0 else "FAIL"
+                item["DisplayStatus"] = "FAIL"
             roster.append(item)
         return roster
 

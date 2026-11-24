@@ -9,7 +9,7 @@
         <div class="stat-value">{{ results.cumulative_credits_passed }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Cumulative GPA (4.0)</div>
+        <div class="stat-label">Cumulative GPA (10.0)</div>
         <div class="stat-value">{{ '%.2f'|format(results.cumulative_gpa) }}</div>
     </div>
     <div class="stat-card">
@@ -18,15 +18,10 @@
     </div>
 </div>
 
-<div class="alert alert-info">
-    <strong>GPA Formula (4.0 Scale):</strong> GPA = &Sigma;(Course GPA 4.0 &times; Credits) / Total GPA Credits (excludes Military, Physical Education, and English courses).<br>
-    <strong>Standing:</strong> Excellent (3.60-4.00) | Good (3.20-3.59) | Fair (2.50-3.19) | Average (2.00-2.49) | Weak (&lt; 2.00).
-</div>
-
 {% for sem in results.semesters %}
     <div class="panel">
         <div class="panel-title">
-            {{ sem.semester }} — Credits Passed: {{ sem.credits_passed }} | Semester GPA (4.0): {{ '%.2f'|format(sem.semester_gpa) }}
+            {{ sem.semester }} — Credits Passed: {{ sem.credits_passed }} | Semester GPA (10.0): {{ '%.2f'|format(sem.semester_gpa) }}
         </div>
         <table class="table">
             <thead>
@@ -38,9 +33,7 @@
                     <th>Midterm</th>
                     <th>Process (10.0)</th>
                     <th>Final Exam</th>
-                    <th>Final (10.0)</th>
-                    <th>Letter</th>
-                    <th>GPA (4.0)</th>
+                    <th>Final Score (10.0)</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -48,20 +41,13 @@
                 {% for c in sem.courses %}
                     <tr>
                         <td>{{ c.section_id }}</td>
-                        <td>
-                            {{ c.subject_id }} - {{ c.subject_name }}
-                            {% if c.gpa_excluded %}
-                                <span class="muted">(Non-GPA)</span>
-                            {% endif %}
-                        </td>
+                        <td>{{ c.subject_id }} - {{ c.subject_name }}</td>
                         <td>{{ c.credits }}</td>
                         <td>{{ c.attendance if c.attendance is not none else '—' }}</td>
                         <td>{{ c.midterm if c.midterm is not none else '—' }}</td>
                         <td>{{ c.process_score if c.process_score is not none else '—' }}</td>
                         <td>{{ c.final_exam if c.final_exam is not none else '—' }}</td>
                         <td><strong>{{ c.final_score if c.final_score is not none else '—' }}</strong></td>
-                        <td><strong>{{ c.letter_grade or '—' }}</strong></td>
-                        <td>{{ '%.1f'|format(c.gpa4) if c.gpa4 is not none else '—' }}</td>
                         <td>
                             <span class="badge {% if c.status == 'Pass' %}badge-active{% elif c.status in ('Fail', 'W') %}badge-locked{% else %}btn-secondary{% endif %}">
                                 {{ c.status }}

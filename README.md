@@ -1,6 +1,6 @@
 # Student Manager System — Group 02
 
-Repository: `https://github.com/nguyendzz/StudentManagerSystem_Group02.git`
+Repository: `https://github.com/nguyendzz/ProgAndTest_Group02.git`
 
 ## Architecture
 - Pattern: **MVC (Model – View – Controller)** (Chapter 3)
@@ -15,6 +15,7 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 pytest -v
+python seed.py
 python run.py
 ```
 

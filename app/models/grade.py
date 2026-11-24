@@ -4,20 +4,6 @@ from typing import Optional
 
 class Grade:
     VALID_STATUSES = ("Draft", "Final", "W")
-    EXCLUDED_PREFIXES = ("GDQP", "GDTC", "QP", "TC", "PE", "ENG", "EN", "MIL")
-    EXCLUDED_KEYWORDS = (
-        "quân sự",
-        "quan su",
-        "quốc phòng",
-        "quoc phong",
-        "thể chất",
-        "the chat",
-        "tiếng anh",
-        "tieng anh",
-        "english",
-        "physical education",
-        "military",
-    )
 
     def __init__(
         self,
@@ -69,24 +55,6 @@ class Grade:
     def process_score(self) -> Optional[float]:
         return self.compute_process_score(self._attendanceScore, self._midtermScore)
 
-    @property
-    def letter_grade(self) -> Optional[str]:
-        if self._gradeStatus == "W":
-            return "W"
-        if self._finalScore is None or self._gradeStatus == "Draft":
-            return None
-        letter, _ = self.score10_to_letter_and_gpa4(self._finalScore)
-        return letter
-
-    @property
-    def gpa4_score(self) -> Optional[float]:
-        if self._gradeStatus == "W":
-            return None
-        if self._finalScore is None or self._gradeStatus == "Draft":
-            return None
-        _, gpa4 = self.score10_to_letter_and_gpa4(self._finalScore)
-        return gpa4
-
     @staticmethod
     def parse_score(raw_value) -> tuple[bool, Optional[float], str]:
         if raw_value is None or str(raw_value).strip() == "":
@@ -111,36 +79,6 @@ class Grade:
             + Decimal("0.75") * Decimal(str(midterm_score))
         )
         return float(raw.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
-
-    @staticmethod
-    def score10_to_letter_and_gpa4(score_10: float) -> tuple[str, float]:
-        s = float(Decimal(str(score_10)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
-        if s >= 9.0:
-            return "A+", 4.0
-        if s >= 8.5:
-            return "A", 4.0
-        if s >= 8.0:
-            return "B+", 3.5
-        if s >= 7.0:
-            return "B", 3.0
-        if s >= 6.0:
-            return "C+", 2.5
-        if s >= 5.5:
-            return "C", 2.0
-        if s >= 5.0:
-            return "D+", 1.5
-        if s >= 4.0:
-            return "D", 1.0
-        return "F", 0.0
-
-    @classmethod
-    def is_excluded_from_gpa(cls, subject_id: str, subject_name: str) -> bool:
-        sid = (subject_id or "").strip().upper()
-        sname = (subject_name or "").strip().lower()
-        for prefix in cls.EXCLUDED_PREFIXES:
-            if sid.startswith(prefix) and (len(sid) == len(prefix) or not sid[len(prefix)].isalpha()):
-                return True
-        return any(kw in sname for kw in cls.EXCLUDED_KEYWORDS)
 
     def calculateFinalScore(self) -> Optional[float]:
         if self._gradeStatus == "W":
@@ -262,16 +200,16 @@ class Grade:
         return cls.from_row(row), "Grades saved successfully."
 
     @staticmethod
-    def classify_academic_standing(gpa_4: float) -> str:
-        if gpa_4 >= 3.60:
+    def classify_academic_standing(gpa: float) -> str:
+        if gpa >= 8.5:
             return "Excellent"
-        if gpa_4 >= 3.20:
+        if gpa >= 7.0:
             return "Good"
-        if gpa_4 >= 2.50:
-            return "Fair"
-        if gpa_4 >= 2.00:
+        if gpa >= 5.5:
             return "Average"
-        return "Weak"
+        if gpa >= 4.0:
+            return "Below Average"
+        return "Poor"
 
     @classmethod
     def get_student_academic_results(cls, db, student_id: str) -> dict:
@@ -321,29 +259,25 @@ class Grade:
             process_score = cls.compute_process_score(
                 r["AttendanceScore"], r["MidtermScore"]
             )
-            excluded = cls.is_excluded_from_gpa(r["SubjectID"], r["SubjectName"])
-
-            letter_grade = None
-            gpa4 = None
             if r["EnrollmentStatus"] == "Withdrawn" or grade_status == "W":
                 result_label = "W"
-                letter_grade = "W"
             elif final_score is None or grade_status == "Draft":
                 result_label = "Pending"
+            elif float(final_score) >= 4.0:
+                result_label = "Pass"
             else:
-                letter_grade, gpa4 = cls.score10_to_letter_and_gpa4(float(final_score))
-                result_label = "Pass" if float(final_score) >= 4.0 else "Fail"
+                result_label = "Fail"
 
             credits = int(r["Credits"])
-            if result_label in ("Pass", "Fail") and gpa4 is not None:
+            if result_label in ("Pass", "Fail") and final_score is not None:
+                score_val = Decimal(str(final_score))
+                semesters_map[sem]["weighted_sum"] += score_val * credits
+                semesters_map[sem]["gpa_credits"] += credits
+                cum_weighted_sum += score_val * credits
+                cum_gpa_credits += credits
                 if result_label == "Pass":
                     semesters_map[sem]["credits_passed"] += credits
                     cum_credits_passed += credits
-                if not excluded:
-                    semesters_map[sem]["weighted_sum"] += Decimal(str(gpa4)) * credits
-                    semesters_map[sem]["gpa_credits"] += credits
-                    cum_weighted_sum += Decimal(str(gpa4)) * credits
-                    cum_gpa_credits += credits
 
             semesters_map[sem]["courses"].append(
                 {
@@ -356,9 +290,6 @@ class Grade:
                     "process_score": process_score,
                     "final_exam": r["FinalExamScore"],
                     "final_score": final_score if result_label in ("Pass", "Fail") else None,
-                    "letter_grade": letter_grade,
-                    "gpa4": gpa4,
-                    "gpa_excluded": excluded,
                     "status": result_label,
                 }
             )
